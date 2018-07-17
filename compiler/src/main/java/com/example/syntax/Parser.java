@@ -1,34 +1,34 @@
 package com.example.syntax;
 
-import com.example.ast.Block;
-import com.example.ast.CProperties;
-import com.example.ast.CProperty;
-import com.example.ast.Component;
-import com.example.ast.Components;
-import com.example.ast.ViewAndroid;
-import com.example.lexer.Lexer;
 import com.example.lexer.Token;
 import com.example.lexer.TokenType;
+import com.example.models.Component;
+import com.example.models.Property;
 
-import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Parser {
-    private Lexer lexer;
+    private List<Token> tokens;
     private Token token;
-    private Token errorToken;
+    private Token tokenError;
 
+    private int tokenIndex = 0;
     private int errors;
 
-    public Parser(FileReader file) throws IOException {
-        this.lexer = new Lexer(file);
-        this.token = lexer.getToken();
+    private ArrayList<Property> properties;
+    private ArrayList<Component> components;
+
+    public Parser(List<Token> tokens) {
+        this.tokens = tokens;
+        this.token = tokens.get(tokenIndex);
     }
 
     // verifies current token type and grabs next token or reports error
-    private boolean eat(TokenType type) throws IOException {
+    private boolean eat(TokenType type) {
         if (token.getType() == type) {
-            token = lexer.getToken();
+            token = tokens.get(tokenIndex++);
             return true;
         } else {
             error(type);
@@ -39,7 +39,7 @@ public class Parser {
     // reports an error to the console
     private void error(TokenType type) {
         // only report error once per erroneous token
-        if (token == errorToken)
+        if (token == tokenError)
             return;
 
         // print error report
@@ -47,7 +47,7 @@ public class Parser {
         System.err.print(" at line " + token.getLineNumber() + ", column " + token.getColumnNumber());
         System.err.println("; Expected " + type);
 
-        errorToken = token; // set error token to prevent cascading
+        tokenError = token; // set error token to prevent cascading
         errors++; // increment error counter
     }
 
@@ -58,7 +58,7 @@ public class Parser {
                 if (token.getType() == skip)
                     return;
             }
-            token = lexer.getToken();
+            token = tokens.get(tokenIndex++);
         }
     }
 
@@ -67,68 +67,5 @@ public class Parser {
         return errors;
     }
 
-    //<View>    ::= linearLayout "(" <CProperties> ")" "{" <Block> "}"
-    public ViewAndroid parseViewandroid() throws IOException {
-        eat(TokenType.LINEAR_LAYOUT);
-        eat(TokenType.OPEN_PROPERTIES);
 
-        CProperties cProperties = parseCProperties();
-
-        eat(TokenType.CLOSE_PROPERTIES);
-        eat(TokenType.OPEN_REGION);
-
-        Block block = parseBlock();
-
-        eat(TokenType.CLOSE_REGION);
-
-        return new ViewAndroid(cProperties, block);
-    }
-
-    //<CProperties>   ::= <CProperty><CProperties>
-    //                  | "," <CProperties>
-    //                  | EPSILON
-    public CProperties parseCProperties() {
-        return new CProperties();
-    }
-
-    //<CProperty>   ::= <Property> "=" <Constant>
-    public CProperty parseCProperty() {
-        return new CProperty();
-    }
-
-    //<Block>     ::= <RestBlock><Block>
-    //              | ";" <Block>
-    //              | EPSILON
-    public Block parseBlock() {
-        return new Block();
-    }
-
-    //<RestBlock>   ::= <Component> "(" <ComProperties> ")"
-    public Components parseRestBlock() {
-        return new Components();
-    }
-
-    //<Component>   ::= <editText>
-    //        | <textView>
-    public Component parseComponent() {
-        return new Component();
-    }
-
-    //<Property>    ::= <width>
-    //        | <height>
-    //        | <orientation>
-    // Reemplazar a un solo valor
-
-    //<ComProperties> ::= <ComText>
-    //        | <ComText> "," <ComOther>
-    //<ComText>   ::= <text> "="  "\\"" <TextValue> "\\""
-    //<ComOther>    ::= <ComSize> "=" <Integer>
-    //<ComSize>   ::= <textSize>
-    //<TextValue>   ::= [-A-Za-z_]+
-    //<Integer>   ::= 0...9 <Integer>
-    //        | EPSILON
-    //<Constant>    ::= <MATCH_PARENT>
-    //        | <WRAP_CONTENT>
-    //        | <VERTICAL>
-    //        | <HORIZONTAL>
 }

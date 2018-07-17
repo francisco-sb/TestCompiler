@@ -1,87 +1,55 @@
-View 			-> 	Container(CProperties) {Block}
-CProperties 	-> 	CProperty CProperties | ,CProperties | EPSILON
-CProperty 		-> 	Property = Constant
-Block			->	RestBlock Block | ;Block | EPSILON
-RestBlock 		->	Component(ComProperties)
-Container		-> 	linearLayout
-Component		->	editText | textView
-Property		->	width | height | orientation
-ComProperties 	->	ComText | ComText, ComOther
-ComText			->	text = "TextValue"
-ComOther		->	ComSize = Integer
-ComSize			->	textSize
-TextValue			->	a-zA-Z
-Integer			->	0...9 Integer | EPSILON
-Constant		->	MATCH_PARENT | WRAP_CONTENT | VERTICAL | HORIZONTAL
+////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////                     G R A M M A R                    ///////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+<View>        ::=   'linearLayout' '(' <Properties> ')' '{' <Components> '}'
+<Properties>  ::=   <Property> <Properties>
+                |   ',' <Properties>
+                |   EPSILON
+<Property>    ::=   'width' '=' <Constant>
+                |   'height' '=' <Constant>
+                |   'orientation' '=' <Constant>
+<Components>  ::=   <Component><Components>
+                |   EPSILON
+<Component>   ::=   'editText' '(' <Attribute> ')' ';'
+                |   'textView' '(' <Attribute> ')' ';'
+<Attribute>   ::=   'text' '=' '\\"' <String> '\\"'
+                |   'textSize' '=' <Size> ',' 'text' '=' '\\"' <String> '\\"'
+<Size>        ::=   <Digit> <Digit>
+<Digit>       ::=   '0...9'
+<String>      ::=   'a-zA-Z'
+<Constant>    ::=   'MATCH_PARENT'
+                |   'WRAP_CONTENT'
+                |   'HORIZONTAL'
+                |   'VERTICAL'
 
 
-<View> 		::= <Container> "(" <CProperties> ")" "{" <Block> "}"
-<CProperties> 	::= <CProperty><CProperties> 
-			  | "," <CProperties> 
-			  | EPSILON
-<CProperty> 	::= <Property> "=" <Constant>
-<Block>			::=	<RestBlock><Block>
-			  | ";" <Block>
-			  | EPSILON
-<RestBlock> 	::=	<Component> "(" <ComProperties> ")"
-<Container>		::= <linearLayout>
-<Component>		::=	<editText>
-			  | <textView>
-<Property>		::=	<width>
-			  | <height> 
-			  | <orientation>
-<ComProperties> ::=	<ComText> 
-			  | <ComText> "," <ComOther>
-<ComText>		::=	<text> "="  "\\"" <TextValue> "\\""
-<ComOther>		::=	<ComSize> "=" <Integer>
-<ComSize>		::= <textSize>
-<TextValue>		::=	[-A-Za-z_]+
-<Integer>		::=	0...9 <Integer>
-			  | EPSILON
-<Constant>		::= <MATCH_PARENT>
-			  | <WRAP_CONTENT>
-			  | <VERTICAL>
-			  |	<HORIZONTAL>
+////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////                 F I R S T   S E T                    ///////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+{   <View>      : [ 'linearLayout' ],
+    <Properties>: [ ',', null, 'width', 'height', 'orientation' ],
+    <Property>  : [ 'width', 'height', 'orientation' ],
+    <Components>: [ 'editText', 'textView' ],
+    <Component> : [ 'editText', 'textView' ],
+    <Attribute> : [ 'text', 'textSize' ],
+    <Size>      : [ '0' ],
+    <Digit>     : [ '0' ],
+    <String>    : [ 'abc' ],
+    <Constant>  : [ 'MATCH_PARENT', 'WRAP_CONTENT', 'VERTICAL', 'HORIZONTAL' ] }
 
-//////////////////////////////////////////////////////////////////////////////////////////
-////////// 					F I R S T  A N D  F O L L O W 						//////////
-//////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////               F O L L O W   S E T                    ///////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FIRST
-
-{ View: [ 'linearLayout' ],
-  CProperties: [ ',', $, 'width', 'height', 'orientation' ],
-  CProperty: [ 'width', 'height', 'orientation' ],
-  Block: [ ';', $, 'editText', 'textView' ],
-  RestBlock: [ 'editText', 'textView' ],
-  Container: [ 'linearLayout' ],
-  Component: [ 'editText', 'textView' ],
-  Property: [ 'width', 'height', 'orientation' ],
-  ComProperties: [ 'text' ],
-  ComText: [ 'text' ],
-  ComOther: [ 'textSize' ],
-  ComSize: ['textSize']
-  TextValue: [ 'a-zA-Z', $ ],
-  Integer: [ '0...9', $ ]
-  Constant: ['MATCH_PARENT', 'WRAP_CONTENT', 'VERTICAL', 'HORIZONTAL']}
-
-
-
-FOLLOW
-
-{ View: [ '$' ],
-  CProperties: [ ')' ],
-  CProperty: [ ',', 'width', 'height', 'orientation', ')' ],
-  Block: [ '}' ],
-  RestBlock: [ ';', 'editText', 'textView', '}' ],
-  Container: [ '(' ],
-  Component: [ '(' ],
-  Property: [ '=' ],
-  ComProperties: [ ')' ],
-  ComText: [ ')', ',' ],
-  ComOther: [ ')' ],
-  ComSize: ['='],
-  TextValue: [ '\\"' ],
-  Integer: [ ')' ]
-  Constant: [',', 'width', 'height', 'orientation', ')']}
+{   <View>      : [ '\u0000' ],
+    <Properties>: [ ')' ],
+    <Property>  : [ ',', 'width', 'height', 'orientation', ')' ],
+    <Components>: [ '}' ],
+    <Component> : [ 'editText', 'textView' ],
+    <Attribute> : [ ')' ],
+    <Size>      : [ ',' ],
+    <Digit>     : [ '0', ',' ],
+    <String>    : [ '\\"' ],
+    <Constant>  : [ ',', 'width', 'height', 'orientation', ')' ] }

@@ -36,8 +36,6 @@ public enum TokenType {
     ID, // [a-zA-Z]
 
     // for error reporting
-    STATEMENT,
-    EXPRESSION,
-    OPERATOR,
-    TYPE
+    PROPERTY,
+    COMPONENT,
 }
