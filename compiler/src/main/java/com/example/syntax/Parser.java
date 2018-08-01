@@ -67,5 +67,62 @@ public class Parser {
         return errors;
     }
 
+    //<View>        ::=   'linearLayout' '(' <Properties> ')' '{' <Components> '}'
+    public View parseView() {
+        eat(TokenType.LINEAR_LAYOUT);
+        eat(TokenType.OPEN_PROPERTIES);
+
+        List<Property> properties = parseProperties();
+
+        eat(TokenType.CLOSE_PROPERTIES);
+        eat(TokenType.OPEN_REGION);
+
+    }
+    //<Properties>  ::=   <Property> <Properties>
+    //                |   ',' <Properties>
+    //                |   EPSILON
+    public List<Property> parseProperties() {
+        List<Property> properties = new ArrayList()<>;
+
+        Property property = parseProperty();
+
+        if (property != null) {
+            properties.add(property)
+        }
+
+        return properties;
+    }
+    //<Property>    ::=   'width' '=' <Constant>
+    //                |   'height' '=' <Constant>
+    //                |   'orientation' '=' <Constant>
+    public Property parseProperty() {
+        Property property = new Property();
+
+        if (token.getType() == TokenType.WIDTH || token.getType() == TokenType.HEIGHT || token.getType == TokenType.ORIENTATION) {
+            property.setType(token.getType);
+            eat(token.getType());
+
+            eat(TokenType.ASSIGN_VALUE);
+
+            property.setConstant(token.getType)
+            eat(TokenType.getType())
+        }
+
+        return property;
+    }
+
+    //<Components>  ::=   <Component><Components>
+    //                |   EPSILON
+    //<Component>   ::=   'editText' '(' <Attribute> ')' ';'
+    //                |   'textView' '(' <Attribute> ')' ';'
+    //<Attribute>   ::=   'text' '=' '\\"' <String> '\\"'
+    //                |   'textSize' '=' <Size> ',' 'text' '=' '\\"' <String> '\\"'
+    //<Size>        ::=   <Digit> <Digit>
+    //<Digit>       ::=   '0...9'
+    //<String>      ::=   'a-zA-Z'
+    //<Constant>    ::=   'MATCH_PARENT'
+    //                |   'WRAP_CONTENT'
+    //                |   'HORIZONTAL'
+    //                |   'VERTICAL'
 
 }

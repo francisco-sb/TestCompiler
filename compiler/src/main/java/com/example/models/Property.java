@@ -7,6 +7,8 @@ public class Property {
     private TokenType constant;
     private String value;
 
+    public Property() {}
+
     public Property(TokenType type, TokenType constant) {
         this.type = type;
         this.constant = constant;
