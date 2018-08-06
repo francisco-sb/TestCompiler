@@ -2,6 +2,6 @@ package com.example.ast;
 
 import com.example.visitor.Visitor;
 
-interface NameComponent {
+public interface NameComponent {
     void accept(Visitor v);
 }

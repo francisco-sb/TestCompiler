@@ -1,3 +1,8 @@
 <resources>
-    <string name="app_name">Test</string>
+    <string name="app_name">Compilador</string>
+    <string name="label_grammar">Gramatica</string>
+    <string name="label_predictive_table">Tabla predictiva</string>
+
+    <string name="label_first_follow"><![CDATA[First & Follow]]></string>
+    <string name="label_clear">Limpiar</string>
 </resources>

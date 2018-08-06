@@ -2,13 +2,14 @@ package com.example.ast;
 
 import com.example.visitor.Visitor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Components {
     private List<Component> list;
 
-    public Components(List<Component> list) {
-        this.list = list;
+    public Components() {
+        this.list = new ArrayList<>();
     }
 
     public List<Component> getList() {
