@@ -38,5 +38,7 @@ public enum TokenType {
     // for error reporting
     PROPERTY,
     COMPONENT,
-    TYPE
+    TYPE,
+    NAME_COMPONENT,
+    ATTRIBUTE
 }

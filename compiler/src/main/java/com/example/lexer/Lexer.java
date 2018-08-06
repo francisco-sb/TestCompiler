@@ -44,7 +44,7 @@ public class Lexer {
         properties.put("textSize", TokenType.TEXT_SIZE);
     }
 
-    public Lexer(FileReader file) throws FileNotFoundException{
+    public Lexer(FileReader file) {
         this.stream = new BufferedReader(file);
         nextChar = getChar();
     }
