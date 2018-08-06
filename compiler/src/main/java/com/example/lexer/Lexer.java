@@ -18,6 +18,7 @@ public class Lexer {
     private final static Map<String, TokenType> reservedWords; // reserved words
     private final static Map<Character, TokenType> punctuation;
     private final static Map<String, TokenType> properties; // reserved words
+    private final static Map<String, TokenType> attributes; // reserved words
 
     private int errors; // number of errors
 
@@ -40,8 +41,10 @@ public class Lexer {
         properties.put("orientation", TokenType.ORIENTATION);
         properties.put("width", TokenType.WIDTH);
         properties.put("height", TokenType.HEIGHT);
-        properties.put("text", TokenType.TEXT_VALUE);
-        properties.put("textSize", TokenType.TEXT_SIZE);
+
+        attributes = new HashMap<>();
+        attributes.put("text", TokenType.TEXT_VALUE);
+        attributes.put("textSize", TokenType.TEXT_SIZE);
     }
 
     public Lexer(FileReader file) {
@@ -144,6 +147,11 @@ public class Lexer {
             if (prop != null)
                 return new Token(prop, new TokenAttribute(), lineNumber, columNumber - current.length());
 
+            TokenType attribute = attributes.get(current);
+
+            if (attribute != null)
+                return new Token(attribute, new TokenAttribute(), lineNumber, columNumber - current.length());
+
             if (current.equals("MATCH_PARENT"))
                 return new Token(
                         TokenType.MATCH_PARENT,
@@ -182,7 +190,14 @@ public class Lexer {
                 nextChar = getChar();
             }
 
-            if (!Character.isDigit(nextChar)) {
+            int digits;
+            try {
+                digits = Integer.parseInt(numString);
+            } catch (Exception e) {
+                return new Token(TokenType.UNKNOWN, new TokenAttribute(), lineNumber, columNumber - numString.length() + 1);
+            }
+
+            /*if (!Character.isDigit(nextChar)) {
                 nextChar = getChar();
                 columNumber++;
 
@@ -193,11 +208,11 @@ public class Lexer {
                 }
 
                 return new Token(TokenType.UNKNOWN, new TokenAttribute(), lineNumber, columNumber - numString.length() + 1);
-            }
+            }*/
 
             return new Token(
                     TokenType.DIGIT,
-                    new TokenAttribute(Integer.parseInt(numString)),
+                    new TokenAttribute(digits),
                     lineNumber,
                     columNumber - numString.length() + 1
             );
@@ -216,6 +231,7 @@ public class Lexer {
             }
 
             if (nextChar == '\"') {
+                text += Character.toString((char) nextChar);
                 nextChar = getChar();
                 columNumber++;
 

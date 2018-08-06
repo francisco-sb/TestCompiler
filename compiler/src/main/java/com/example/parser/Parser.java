@@ -36,16 +36,14 @@ public class Parser {
 
     private int errors;
 
-    private ArrayList<Property> properties;
-    private ArrayList<Component> components;
+    private ArrayList<Property> properties = new ArrayList<>();
+    private ArrayList<Component> components = new ArrayList<>();
 
     private ArrayList<String> errorList = new ArrayList<>();
 
     public Parser(FileReader file) throws IOException {
         this.lexer = new Lexer(file);
         this.token = lexer.getToken();
-        properties = new ArrayList<>();
-        components = new ArrayList<>();
     }
 
     // verifies current token type and grabs next token or reports error
@@ -197,22 +195,25 @@ public class Parser {
 
         if (attribute != null) {
             attributeList.add(attribute);
+
+            if (token.getType() == TokenType.COMMA) {
+                eat(TokenType.COMMA);
+
+                if (token.getType() == TokenType.TEXT_SIZE || token.getType() == TokenType.TEXT_VALUE) {
+                    Attribute attribute2 = parseAttribute();
+
+                    if (attribute2 != null) {
+                        attributeList.add(attribute2);
+                    } else {
+                        eat(TokenType.COMPONENT);
+                        return null;
+                    }
+
+                }
+            }
+
             eat(TokenType.CLOSE_PROPERTIES);
             eat(TokenType.SEMI);
-
-            if (token.getType() == TokenType.TEXT_SIZE || token.getType() == TokenType.TEXT_VALUE) {
-                Attribute attribute2 = parseAttribute();
-
-                if (attribute2 != null) {
-                    attributeList.add(attribute2);
-                    eat(TokenType.CLOSE_PROPERTIES);
-                    eat(TokenType.SEMI);
-                } else {
-                    eat(TokenType.COMPONENT);
-                    return null;
-                }
-
-            }
 
             return new Component(nameComponent, attributeList);
         } else {
@@ -258,7 +259,7 @@ public class Parser {
             eat(TokenType.TEXT_SIZE);
             eat(TokenType.ASSIGN_VALUE);
 
-            if (token.getType() == TokenType.DIGIT) {
+            if (token.getType() == TokenType.DIGIT) { // TODO: Aquí es
                 value = new IntegerValue(parseIntegerValue());
                 return new Attribute(attributeType, value);
             } else {
@@ -302,9 +303,11 @@ public class Parser {
     //                |   'VERTICAL'
     private Constant parseConstant() throws IOException {
         Constant value = null;
-        while (token.getType() == TokenType.MATCH_PARENT || token.getType() == TokenType.WRAP_CONTENT ||
-                token.getType() == TokenType.VERTICAL || token.getType() == TokenType.HORIZONTAL)
+        if (token.getType() == TokenType.MATCH_PARENT || token.getType() == TokenType.WRAP_CONTENT ||
+                token.getType() == TokenType.VERTICAL || token.getType() == TokenType.HORIZONTAL) {
             value = new Constant(token.getAttribute().getIdVal());
+            eat(token.getType());
+        }
 
         return value;
     }

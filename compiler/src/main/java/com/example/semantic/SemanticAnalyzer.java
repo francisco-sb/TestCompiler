@@ -7,7 +7,6 @@ import com.example.ast.Constant;
 import com.example.ast.EditTextComponent;
 import com.example.ast.HeightType;
 import com.example.ast.IntegerValue;
-import com.example.ast.NameComponent;
 import com.example.ast.OrientationType;
 import com.example.ast.Property;
 import com.example.ast.SizeAttribute;
@@ -52,124 +51,135 @@ public class SemanticAnalyzer {
 
     // Start semantic analyzer
     public void analyzeView() throws IOException {
-        this.parser.parseView();
-        this.properties = this.parser.getProperties();
+        parser.parseView();
+        properties = parser.getProperties();
         checkProperties();
-        this.components = this.parser.getComponents();
-        checkComponents();
+        components = parser.getComponents();
+        if (components.size() > 0)
+            checkComponents();
+        else
+            error(ErrorType.NO_COMPONENTS_FOUND);
     }
 
     private void checkProperties() {
         for (int i = 0; i < properties.size(); i++) {
             Property property = properties.get(i);
-            Type type = property.getType();
-            Constant value = property.getValue();
 
-            if (!isTypeValid(type) || !isValueConstant(value))
-                error(ErrorType.BAD_PROPERTY_DECLARATION, property);
+            if (property != null) {
+                Type type = property.getType();
+                Constant value = property.getValue();
+
+                if (!isTypeValid(type))
+                    error(ErrorType.PROPERTY_TYPE_NOT_EXISTS);
+                if (!isValueConstant(value))
+                    error(ErrorType.CONSTANT_VALUE_NOT_EXISTS);
+            } else {
+                error(ErrorType.BAD_PROPERTY_DECLARATION);
+            }
         }
     }
 
     private void checkComponents() {
         for (int i = 0; i < components.size(); i++) {
             Component component = components.get(i);
-            NameComponent nameComponent = component.getComponent();
-            List<Attribute> attributes = component.getAttributes();
 
-            if (isComponent(nameComponent)) {
+            if (component!= null && isComponent(component)) {
+                List<Attribute> attributes = component.getAttributes();
+
                 for (int j = 0; j < attributes.size(); j++) {
                     Attribute attribute = attributes.get(j);
-                    AttributeType type = attribute.getType();
-                    Value value = attribute.getValue();
 
-                    if (!isAttributeValid(type) || !isValueValid(value)) {
-                        error(ErrorType.BAD_COMPONENT_DECLARATION, component);
+                    if (attribute != null) {
+                        AttributeType type = attribute.getType();
+                        Value value = attribute.getValue();
+
+                        if (!isAttributeValid(type))
+                            error(ErrorType.ATTRIBUTE_NOT_EXISTS);
+
+                        if (!isValueValid(value))
+                            error(ErrorType.VALUE_INVALID);
+
+                    } else {
+                        error(ErrorType.BAD_ATTRIBUTE_DECLARATION);
                     }
                 }
+            } else {
+                error(ErrorType.BAD_COMPONENT_DECLARATION);
             }
         }
     }
 
     private boolean isTypeValid(Type type) {
-        if (type != null && (type instanceof WidthType ||
-                type instanceof HeightType || type instanceof OrientationType)) {
-            return true;
-        } else {
-            error(ErrorType.BAD_TYPE_DECLARATION, type);
-            return false;
-        }
+        return type != null && (type instanceof WidthType ||
+                type instanceof HeightType || type instanceof OrientationType);
 
     }
 
     private boolean isValueConstant(Constant constant) {
-        if (constant != null && (constant.getValue().equals("MATCH_PARENT") ||
-                constant.getValue().equals("WRAP_CONTENT") ||
-                constant.getValue().equals("VERTICAL") ||
-                constant.getValue().equals("HORIZONTAL"))) {
-            return true;
-        } else {
-            assert constant != null;
-            error(ErrorType.BAD_CONSTANT_VALUE_DECLARATION, constant.getValue());
-            return false;
-        }
+        return constant.getValue().equals("MATCH_PARENT") || constant.getValue().equals("WRAP_CONTENT") ||
+                constant.getValue().equals("VERTICAL") || constant.getValue().equals("HORIZONTAL");
     }
 
-    private boolean isComponent(NameComponent component) {
-        if (component != null && (component instanceof EditTextComponent ||
-                component instanceof TextViewComponent)) {
-            return true;
-        } else {
-            error(ErrorType.COMPONENT_NOT_FOUND, component);
-            return false;
-        }
+    private boolean isComponent(Component component) {
+        return component.getComponent() instanceof EditTextComponent || component.getComponent() instanceof TextViewComponent;
     }
 
     private boolean isAttributeValid(AttributeType attributeType) {
-        if (attributeType != null && (attributeType instanceof TextAttribute ||
-                attributeType instanceof SizeAttribute)) {
-            return true;
-        } else {
-            error(ErrorType.BAD_ATTRIBUTE_DECLARATION, attributeType);
-            return false;
-        }
+        return attributeType != null && (attributeType instanceof TextAttribute ||
+                attributeType instanceof SizeAttribute);
     }
 
     private boolean isValueValid(Value value) {
-        if (value != null && (value instanceof StringValue ||
-                value instanceof IntegerValue)) {
-            return true;
-        } else {
-            error(ErrorType.BAD_VALUE_DECLARATION, value);
-            return false;
-        }
+        return value != null && (value instanceof StringValue ||
+                value instanceof IntegerValue);
     }
 
-    private void error(ErrorType errorType, Object error) {
+    private void error(ErrorType errorType) {
         errors++;
 
         switch (errorType) {
+            case NO_COMPONENTS_FOUND:
+                System.err.println("Fatal Error: NO_COMPONENTS_FOUND");
+                errorList.add("Fatal Error: NO_COMPONENTS_FOUND");
+                break;
             case BAD_PROPERTY_DECLARATION:
-                System.err.println("Declaration Error: PROPERTY_DECLARATION, variable (" + error.getClass() + ")");
-                errorList.add("Declaration Error: PROPERTY_DECLARATION, variable (" + error.getClass() + ")");
-                break;
-            case BAD_CONSTANT_VALUE_DECLARATION:
-                System.err.println("Assignation Error: CONSTANT_VALUE, variable (" + error.getClass() + ")");
-                errorList.add("Declaration Error: CONSTANT_VALUE, variable (" + error.getClass() + ")");
-                break;
-            case NO_COMPONENTS:
-                System.err.println("Critical Error: NO_COMPONENTS, variable (" + error.getClass() + ")");
-                errorList.add("Declaration Error: NO_COMPONENTS, variable (" + error.getClass() + ")");
-                break;
-            case BAD_ATTRIBUTE_DECLARATION:
-                System.err.println("Declaration Error: ATTRIBUTE_DECLARATION, variable (" + error.getClass() + ")");
-                errorList.add("Declaration Error: ATTRIBUTE_DECLARATION, variable (" + error.getClass() + ")");
+                System.err.println("Declaration Error: PROPERTY_DECLARATION");
+                errorList.add("Declaration Error: PROPERTY_DECLARATION");
                 break;
             case BAD_COMPONENT_DECLARATION:
-                System.err.println("Declaration Error: COMPONENT_DECLARATION, variable (" + error.getClass() + ")");
-                errorList.add("Declaration Error: COMPONENT_DECLARATION, variable (" + error.getClass() + ")");
+                System.err.println("Declaration Error: COMPONENT_DECLARATION");
+                errorList.add("Declaration Error: COMPONENT_DECLARATION");
+                break;
+            case BAD_ATTRIBUTE_DECLARATION:
+                System.err.println("Declaration Error: ATTRIBUTE_DECLARATION");
+                errorList.add("Declaration Error: ATTRIBUTE_DECLARATION");
+                break;
+            case PROPERTY_TYPE_NOT_EXISTS:
+                System.err.println("Declaration Error: PROPERTY_TYPE_NOT_EXISTS");
+                errorList.add("Declaration Error: PROPERTY_TYPE_NOT_EXISTS");
+                break;
+            case CONSTANT_VALUE_NOT_EXISTS:
+                System.err.println("Assignation Error: CONSTANT_VALUE_NOT_EXISTS");
+                errorList.add("Assignation Error: CONSTANT_VALUE_NOT_EXISTS");
+                break;
+            case ATTRIBUTE_NOT_EXISTS:
+                System.err.println("Declaration Error: ATTRIBUTE_NOT_EXISTS");
+                errorList.add("Declaration Error: ATTRIBUTE_NOT_EXISTS");
+                break;
+            case VALUE_INVALID:
+                System.err.println("Assignation Error: VALUE_INVALID");
+                errorList.add("Assignation Error: VALUE_INVALID");
                 break;
             default:
                 break;
         }
+    }
+
+    public ArrayList<Property> getProperties() {
+        return properties;
+    }
+
+    public ArrayList<Component> getComponents() {
+        return components;
     }
 }

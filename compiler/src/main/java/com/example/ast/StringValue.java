@@ -3,7 +3,7 @@ package com.example.ast;
 import com.example.visitor.Visitor;
 
 public class StringValue implements Value {
-    String value;
+    private String value;
 
     public StringValue(String value) {
         this.value = value;
