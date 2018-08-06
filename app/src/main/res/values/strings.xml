@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name">Compilador</string>
-    <string name="label_grammar">Gramatica</string>
-    <string name="label_predictive_table">Tabla predictiva</string>
+    <string name="app_name">Compiler</string>
+    <string name="label_grammar">Grammar</string>
+    <string name="label_predictive_table">Predictive table</string>
 
     <string name="label_first_follow"><![CDATA[First & Follow]]></string>
-    <string name="label_clear">Limpiar</string>
+    <string name="label_clear">Clean code</string>
 </resources>
