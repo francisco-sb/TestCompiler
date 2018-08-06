@@ -1,13 +1,23 @@
 package com.example.parser;
 
 import com.example.ast.Attribute;
+import com.example.ast.AttributeType;
+import com.example.ast.Component;
 import com.example.ast.Components;
 import com.example.ast.Constant;
+import com.example.ast.EditTextComponent;
 import com.example.ast.HeightType;
+import com.example.ast.IntegerValue;
+import com.example.ast.NameComponent;
 import com.example.ast.OrientationType;
 import com.example.ast.Properties;
 import com.example.ast.Property;
+import com.example.ast.SizeAttribute;
+import com.example.ast.StringValue;
+import com.example.ast.TextAttribute;
+import com.example.ast.TextViewComponent;
 import com.example.ast.Type;
+import com.example.ast.Value;
 import com.example.ast.View;
 import com.example.ast.WidthType;
 import com.example.lexer.Lexer;
@@ -17,6 +27,7 @@ import com.example.lexer.TokenType;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Parser {
     private Lexer lexer;
@@ -25,9 +36,8 @@ public class Parser {
 
     private int errors;
 
-    private ArrayList<Properties> properties;
-    private ArrayList<Components> components;
-    private ArrayList<Attribute> attributes;
+    private ArrayList<Property> properties;
+    private ArrayList<Component> components;
 
     private ArrayList<String> errorList = new ArrayList<>();
 
@@ -36,7 +46,6 @@ public class Parser {
         this.token = lexer.getToken();
         properties = new ArrayList<>();
         components = new ArrayList<>();
-        attributes = new ArrayList<>();
     }
 
     // verifies current token type and grabs next token or reports error
@@ -84,16 +93,12 @@ public class Parser {
         return errors;
     }
 
-    public ArrayList<Properties> getProperties() {
+    public ArrayList<Property> getProperties() {
         return properties;
     }
 
-    public ArrayList<Components> getComponents() {
+    public ArrayList<Component> getComponents() {
         return components;
-    }
-
-    public ArrayList<Attribute> getAttributes() {
-        return attributes;
     }
 
     public ArrayList<String> getErrorList() {
@@ -110,7 +115,7 @@ public class Parser {
         eat(TokenType.CLOSE_PROPERTIES);
         eat(TokenType.OPEN_REGION);
 
-        Components componentsView = null;//parseComponents();
+        Components componentsView = parseComponents();
 
         eat(TokenType.CLOSE_REGION);
         eat(TokenType.EOF);
@@ -118,46 +123,32 @@ public class Parser {
         return new View(componentsView, propertiesView);
     }
 
-    /*public View parseView() {
-        eat(TokenType.LINEAR_LAYOUT);
-        eat(TokenType.OPEN_PROPERTIES);
-
-        List<Property> properties = parseProperties();
-
-        eat(TokenType.CLOSE_PROPERTIES);
-        eat(TokenType.OPEN_REGION);
-
-    }*/
-
     //<Properties>  ::=   <Property> <Properties>
     //                |   ',' <Properties>
     //                |   EPSILON
     private Properties parseProperties() throws IOException {
         Properties propertiesView = new Properties();
 
-        while (token.getType() == TokenType.WIDTH || token.getType() == TokenType.HEIGHT || token.getType() == TokenType.ORIENTATION)
-            propertiesView.addElement(parseProperty());
+        while (token.getType() == TokenType.WIDTH ||
+                token.getType() == TokenType.HEIGHT ||
+                token.getType() == TokenType.ORIENTATION) {
+            Property property = parseProperty();
+            propertiesView.addElement(property);
+            getProperties().add(property);
+
+            if (token.getType() == TokenType.COMMA)
+                eat(TokenType.COMMA);
+        }
 
         return propertiesView;
     }
-
-    /*public List<Property> parseProperties() {
-        List<Property> properties = new ArrayList()<>;
-
-        Property property = parseProperty();
-
-        if (property != null) {
-            properties.add(property)
-        }
-
-        return properties;
-    }*/
 
     //<Property>    ::=   'width' '=' <Constant>
     //                |   'height' '=' <Constant>
     //                |   'orientation' '=' <Constant>
     private Property parseProperty() throws IOException {
         Type type = parseType();
+        eat(TokenType.ASSIGN_VALUE);
         Constant value = parseConstant();
 
         return new Property(type, value);
@@ -180,31 +171,130 @@ public class Parser {
         return null;
     }
 
-    /*public Property parseProperty() {
-        Property property = new Property();
-
-        if (token.getType() == TokenType.WIDTH || token.getType() == TokenType.HEIGHT || token.getType == TokenType.ORIENTATION) {
-            property.setType(token.getType);
-            eat(token.getType());
-
-            eat(TokenType.ASSIGN_VALUE);
-
-            property.setConstant(token.getType)
-            eat(TokenType.getType())
-        }
-
-        return property;
-    }*/
-
     //<Components>  ::=   <Component><Components>
     //                |   EPSILON
+    private Components parseComponents() throws IOException {
+        Components componentsView = new Components();
+
+        while (token.getType() == TokenType.EDIT_TEXT ||
+                token.getType() == TokenType.TEXT_VIEW) {
+            Component component = parseComponent();
+            componentsView.addElement(component);
+            getComponents().add(component);
+        }
+
+        return componentsView;
+    }
+
     //<Component>   ::=   'editText' '(' <Attribute> ')' ';'
     //                |   'textView' '(' <Attribute> ')' ';'
+    private Component parseComponent() throws IOException {
+        NameComponent nameComponent = parseNameComponent();
+        eat(TokenType.OPEN_PROPERTIES);
+
+        List<Attribute> attributeList = new ArrayList<>();
+        Attribute attribute = parseAttribute();
+
+        if (attribute != null) {
+            attributeList.add(attribute);
+            eat(TokenType.CLOSE_PROPERTIES);
+            eat(TokenType.SEMI);
+
+            if (token.getType() == TokenType.TEXT_SIZE || token.getType() == TokenType.TEXT_VALUE) {
+                Attribute attribute2 = parseAttribute();
+
+                if (attribute2 != null) {
+                    attributeList.add(attribute2);
+                    eat(TokenType.CLOSE_PROPERTIES);
+                    eat(TokenType.SEMI);
+                } else {
+                    eat(TokenType.COMPONENT);
+                    return null;
+                }
+
+            }
+
+            return new Component(nameComponent, attributeList);
+        } else {
+            eat(TokenType.COMPONENT);
+            return null;
+        }
+    }
+
+    private NameComponent parseNameComponent() throws IOException {
+        if (token.getType() == TokenType.EDIT_TEXT) {
+            eat(TokenType.EDIT_TEXT);
+            return new EditTextComponent();
+        } else if (token.getType() == TokenType.TEXT_VIEW) {
+            eat(TokenType.TEXT_VIEW);
+            return new TextViewComponent();
+        }
+
+        eat(TokenType.NAME_COMPONENT);
+        return null;
+    }
+
     //<Attribute>   ::=   'text' '=' '\\"' <String> '\\"'
     //                |   'textSize' '=' <Size> ',' 'text' '=' '\\"' <String> '\\"'
+    private Attribute parseAttribute() throws IOException {
+        AttributeType attributeType = null;
+        Value value = null;
+
+        if (token.getType() == TokenType.TEXT_VALUE) {
+            attributeType = new TextAttribute();
+            eat(TokenType.TEXT_VALUE);
+            eat(TokenType.ASSIGN_VALUE);
+
+            if (token.getType() == TokenType.STRING) {
+                value = new StringValue(parseStringValue());
+                return new Attribute(attributeType, value);
+            } else {
+                eat(TokenType.ATTRIBUTE);
+                return null;
+            }
+
+        } else if (token.getType() == TokenType.TEXT_SIZE) {
+            attributeType = new SizeAttribute();
+            eat(TokenType.TEXT_SIZE);
+            eat(TokenType.ASSIGN_VALUE);
+
+            if (token.getType() == TokenType.DIGIT) {
+                value = new IntegerValue(parseIntegerValue());
+                return new Attribute(attributeType, value);
+            } else {
+                eat(TokenType.ATTRIBUTE);
+                return null;
+            }
+        }
+
+        eat(TokenType.ATTRIBUTE);
+        return null;
+    }
+
     //<Size>        ::=   <Digit> <Digit>
     //<Digit>       ::=   '0...9'
+    private int parseIntegerValue() throws IOException {
+        int value = 0;
+
+        if (token.getType() == TokenType.DIGIT)
+            value = token.getAttribute().getIntVal();
+
+        eat(TokenType.DIGIT);
+
+        return value;
+    }
+
     //<String>      ::=   'a-zA-Z'
+    private String parseStringValue() throws IOException {
+        String value = "";
+
+        if (token.getType() == TokenType.STRING)
+            value = token.getAttribute().getIdVal();
+
+        eat(TokenType.STRING);
+
+        return value;
+    }
 
     //<Constant>    ::=   'MATCH_PARENT'
     //                |   'WRAP_CONTENT'
