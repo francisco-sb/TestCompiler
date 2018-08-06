@@ -3,6 +3,7 @@ package com.example.fmsierra.test;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -11,12 +12,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.example.ast.Component;
+import com.example.ast.Property;
 import com.example.semantic.SemanticAnalyzer;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -114,17 +119,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             "¡Entrada analizada!\n" +
                             "Tiempo de ejecucion: " + (endTime - startTime) + "ms\n" +
                             "" + semantic.getErrors() + " errores reportados\n" +
-                            "------------------------------------------------------";
+                            "\n------------------------------------------------------\n";
 
                     for (int i = 0; i < semantic.getParser().getErrorList().size(); i++) {
                         result += semantic.getParser().getErrorList().get(i) + "\n";
                     }
+
+                    result += "\n------------------------------------------------------\n";
 
                     for (int i = 0; i < semantic.getErrorList().size(); i++) {
                         result += semantic.getErrorList().get(i) + "\n";
                     }
 
                     editText.setText(result);
+
+                    if (semantic.getErrors() == 0)
+                        showResult(semantic.getProperties(), semantic.getComponents());
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -160,5 +170,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 editText.setText("");
                 break;
         }
+    }
+
+    private void showResult(List<Property> properties, List<Component> components) {
+        FragmentManager fm = getSupportFragmentManager();
+        ResultDialogFragment dialog = new ResultDialogFragment();
+        dialog.setProperties(properties);
+        dialog.setComponents(components);
+        dialog.show(fm, "ResultDialogFragment");
     }
 }
